@@ -1,0 +1,27 @@
+@import url("./style.css");
+
+#banner-container {
+    width: 100%;
+    height: 80px;
+}
+
+#main-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#link-container {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+}
+
+a {
+    color: lightblue;
+}
+
+a:visited {
+    color: lightpink;
+}
