@@ -27,7 +27,7 @@ let zoom = 1;
 const offset = { x: 0, y: 0 };
 const viewportMouse = { x: NaN, y: NaN };
 const canvasMouse = { x: NaN, y: NaN };
-const p1 = { x: 400, y: 400, r: 50 };
+const p1 = { x: 0, y: 0, r: 50 };
 
 debugPanelButton &&
     debugPanelButton.addEventListener(
@@ -73,8 +73,16 @@ canvas.addEventListener(
 
         const scrollDirection = Math.sign(e.deltaY);
         const previousZoom = zoom;
-        zoom = Math.max(0.5, Math.min(2, zoom * (1 - scrollDirection * 0.1)));
+        zoom = Math.max(0.25, Math.min(4, zoom * (1 - scrollDirection * 0.1)));
         const ratio = zoom / previousZoom;
+        
+        // these following two lines are the thing that stumped me to almost 3
+        // days.
+        // it says, for every mouse movement, 
+        //   1st, take the mouse position with zoom considered;
+        //   2nd, take 1st part again times it to the (new / old) zoom ratio;
+        //   3nd, add to offset the difference of 1st and 2nd.
+        //   fuck, this took me too long to understand.
         offset.x += viewportMouse.x / zoom - (viewportMouse.x / zoom) * ratio;
         offset.y += viewportMouse.y / zoom - (viewportMouse.y / zoom) * ratio;
     },
@@ -90,8 +98,8 @@ canvas.addEventListener("mousemove", (e) => {
     viewportMouse.x = e.offsetX;
     viewportMouse.y = e.offsetY;
 
-    canvasMouse.x = (viewportMouse.x - offset.x) / zoom;
-    canvasMouse.y = (viewportMouse.y - offset.y) / zoom;
+    canvasMouse.x = viewportMouse.x / zoom - offset.x;
+    canvasMouse.y = viewportMouse.y / zoom - offset.y;
 });
 
 canvas.addEventListener("mousedown", (e) => {
@@ -163,6 +171,25 @@ function drawPoint(
     ctx.fillText(t, p.x, p.y);
 }
 
+const points: any = [];
+for (let _ = 0; _ < 100; _++) {
+    const magnitude = Math.random() * 1600;
+    const radian = Math.random() * Math.PI * 2;
+    points.push({
+        p: {
+            x: Math.cos(radian) * magnitude,
+            y: Math.sin(radian) * magnitude,
+            r: Math.random() * 50 + 50,
+        },
+        color:
+            `rgb(` +
+            `${Math.floor(Math.random() * 256)} ` +
+            `${Math.floor(Math.random() * 256)} ` +
+            `${Math.floor(Math.random() * 256)}` +
+            `)`,
+    });
+}
+
 function animate() {
     // reset the transform matrix at the start of each frame, and then clear the
     // canvas
@@ -188,6 +215,12 @@ function animate() {
     });
 
     drawPoint({ x: p1.x, y: p1.y, r: p1.r }, { fillStyle: "lightgreen" });
+
+    for (const p of points) {
+        drawPoint(p.p, {
+            fillStyle: p.color,
+        });
+    }
 
     if (showDebugPanel) {
         drawDebugPanel([
