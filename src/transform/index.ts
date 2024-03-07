@@ -4,16 +4,21 @@ import { Color, color } from "chroma.ts";
 /** debug panel */
 const debugFontSize = 18;
 let showDebugPanel = true;
-const debugPanelButton = document.querySelector("#debug-panel-button")!;
+const debugPanelButton = document.querySelector("#debug-panel-button");
 const resetOffsetButton = document.querySelector<HTMLButtonElement>(
     "#reset-offset-button",
-)!;
+);
+const resetZoomButton =
+    document.querySelector<HTMLButtonElement>("#reset-zoom-button");
+const getTransformButton = document.querySelector<HTMLButtonElement>(
+    "#get-transform-button",
+);
 // @ts-ignore
 const canvasContainerDiv =
     document.querySelector<HTMLDivElement>("#canvas-container")!;
 const canvas = document.querySelector<HTMLCanvasElement>("#canvas")!;
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = canvasContainerDiv.clientWidth;
+canvas.height = canvasContainerDiv.clientHeight;
 const ctx = canvas.getContext("2d")!;
 let centerX = canvas.width / 2,
     centerY = canvas.height / 2;
@@ -22,20 +27,23 @@ let zoom = 1;
 const offset = { x: 0, y: 0 };
 const viewportMouse = { x: NaN, y: NaN };
 const canvasMouse = { x: NaN, y: NaN };
-const p0 = { x: -50, y: -50, r: 50 };
-const p1 = { x: 50, y: 50, r: 50 };
-const p2 = { x: 150, y: 150, r: 50 };
-const p3 = { x: 400, y: 400, r: 50 };
-const p4 = { x: 300, y: 500, r: 60 };
+const p1 = { x: 400, y: 400, r: 50 };
 
-debugPanelButton.addEventListener(
-    "click",
-    () => (showDebugPanel = !showDebugPanel),
-);
-resetOffsetButton.addEventListener("click", () => {
-    offset.x = 0;
-    offset.y = 0;
-});
+debugPanelButton &&
+    debugPanelButton.addEventListener(
+        "click",
+        () => (showDebugPanel = !showDebugPanel),
+    );
+resetOffsetButton &&
+    resetOffsetButton.addEventListener("click", () => {
+        offset.x = 0;
+        offset.y = 0;
+    });
+resetZoomButton && resetZoomButton.addEventListener("click", () => (zoom = 1));
+getTransformButton &&
+    getTransformButton.addEventListener("click", () =>
+        console.log(ctx.getTransform()),
+    );
 addEventListener("keyup", (e) => {
     switch (e.key) {
         case "r":
@@ -46,8 +54,8 @@ addEventListener("keyup", (e) => {
 });
 
 addEventListener("resize", () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // canvas.width = window.innerWidth;
+    // canvas.height = window.innerHeight;
     centerX = canvas.width / 2;
     centerY = canvas.height / 2;
 });
@@ -58,11 +66,17 @@ canvas.addEventListener(
     "wheel",
     (e) => {
         e.preventDefault();
+        // the hardest part of this feature(zooming under mouse cursor), in my
+        // opinion, is each zoom action actually changes the offset. imagine
+        // zoom in when the mouse is in the center, the left corner of the
+        // canvas is being pushed out.
 
-        zoom = Math.max(
-            0.25,
-            Math.min(4, (zoom -= Math.sign(e.deltaY) * 0.25)),
-        );
+        const scrollDirection = Math.sign(e.deltaY);
+        const previousZoom = zoom;
+        zoom = Math.max(0.5, Math.min(2, zoom * (1 - scrollDirection * 0.1)));
+        const ratio = zoom / previousZoom;
+        offset.x += viewportMouse.x / zoom - (viewportMouse.x / zoom) * ratio;
+        offset.y += viewportMouse.y / zoom - (viewportMouse.y / zoom) * ratio;
     },
     { passive: false },
 );
@@ -93,14 +107,16 @@ canvas.addEventListener("mouseup", (e) => {
 });
 
 function drawDebugPanel(info: string[]) {
+    const matrix = ctx.getTransform();
     ctx.resetTransform();
     ctx.font = `${debugFontSize}px monospace`;
     ctx.textAlign = "start";
     ctx.textBaseline = "bottom";
-    ctx.fillStyle = "#ddd";
+    ctx.fillStyle = "magenta";
     for (let i = 0; i < info.length; i++) {
         ctx.fillText(info[i], 0, canvas.height - i * debugFontSize);
     }
+    ctx.setTransform(matrix);
 }
 
 function drawPoint(
@@ -148,10 +164,14 @@ function drawPoint(
 }
 
 function animate() {
+    // reset the transform matrix at the start of each frame, and then clear the
+    // canvas
+    ctx.resetTransform();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     ctx.beginPath();
-    const vc = canvas.height / 2,
-        hc = canvas.width / 2;
+    const vc = canvas.height / 2 - 0.5,
+        hc = canvas.width / 2 - 0.5;
     ctx.moveTo(0, vc);
     ctx.lineTo(canvas.width, vc);
     ctx.moveTo(hc, 0);
@@ -160,13 +180,14 @@ function animate() {
     ctx.strokeStyle = color("whitesmoke").toString();
     ctx.stroke();
 
-    ctx.setTransform({ m11: zoom, m22: zoom, m41: offset.x, m42: offset.y });
+    ctx.setTransform({
+        a: zoom,
+        d: zoom,
+        e: offset.x * zoom,
+        f: offset.y * zoom,
+    });
 
-    drawPoint(p0, { fillStyle: color("burlywood") });
     drawPoint({ x: p1.x, y: p1.y, r: p1.r }, { fillStyle: "lightgreen" });
-    drawPoint({ x: p2.x, y: p2.y, r: p2.r });
-    drawPoint({ x: p3.x, y: p3.y, r: p3.r }, { fillStyle: "lightblue" });
-    drawPoint({ x: p4.x, y: p4.y, r: p4.r }, { fillStyle: "blueviolet" });
 
     if (showDebugPanel) {
         drawDebugPanel([
