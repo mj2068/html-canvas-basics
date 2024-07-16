@@ -24,7 +24,7 @@ let centerX = canvas.width / 2,
     centerY = canvas.height / 2;
 let isDragging = false;
 let zoom = 1;
-const offset = { x: 0, y: 0 };
+const offset = { x: canvas.width / 2, y: canvas.height / 2 };
 const viewportMouse = { x: NaN, y: NaN };
 const canvasMouse = { x: NaN, y: NaN };
 const p1 = { x: 0, y: 0, r: 50 };
@@ -75,10 +75,10 @@ canvas.addEventListener(
         const previousZoom = zoom;
         zoom = Math.max(0.25, Math.min(4, zoom * (1 - scrollDirection * 0.1)));
         const ratio = zoom / previousZoom;
-        
+
         // these following two lines are the thing that stumped me to almost 3
         // days.
-        // it says, for every mouse movement, 
+        // it says, for every mouse movement,
         //   1st, take the mouse position with zoom considered;
         //   2nd, take 1st part again times it to the (new / old) zoom ratio;
         //   3nd, add to offset the difference of 1st and 2nd.
@@ -172,7 +172,7 @@ function drawPoint(
 }
 
 const points: any = [];
-for (let _ = 0; _ < 100; _++) {
+for (let _ = 0; _ < 50; _++) {
     const magnitude = Math.random() * 1600;
     const radian = Math.random() * Math.PI * 2;
     points.push({

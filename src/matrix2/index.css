@@ -1,0 +1,68 @@
+@import url("/src/style.css");
+
+* {
+    --controls-container-height: 200px;
+}
+
+body {
+    height: 100vh;
+    position: relative;
+}
+
+#canvas-container {
+    width: 100%;
+    height: calc(100% - var(--controls-container-height));
+    min-height: 400px;
+    overflow: hidden;
+}
+
+#controls-container {
+    position: relative;
+    bottom: 0;
+
+    width: 100%;
+    height: var(--controls-container-height);
+    display: grid;
+    justify-content: center;
+
+    background-color: #99b5;
+}
+
+.option-container {
+    justify-content: center;
+}
+#matrix-option-container {
+    display: grid;
+
+    border: solid black;
+    border-width: 0 1px 0 1px;
+
+    background-color: lightgray;
+
+    overflow: hidden;
+}
+.option-container > .option-label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font: 1rem Arial;
+}
+#matrix-option-container #option-content {
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    grid-template-columns: 1fr 8fr 1fr 1fr 4fr 1fr;
+}
+#matrix-option-container #option-content span {
+    font: 4rem monospace;
+    text-align: center;
+}
+#matrix-option-container #sliders-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+#matrix-option-container .slider-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}

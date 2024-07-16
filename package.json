@@ -13,7 +13,6 @@
     "vite": "^5.1.0"
   },
   "dependencies": {
-    "chroma.ts": "^1.0.10",
-    "color-name": "^2.0.0"
+    "chroma.ts": "^1.0.10"
   }
 }
